@@ -27,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Color(0xFFFFD700), // Yellow background
       body: Center(
         child: Text(
-          'Welcome to Coffee Way',
+          'مرحباً في Coffee Way!',
           style: TextStyle(
             fontSize: 24,
             color: Color(0xFFD32F2F), // Red text
