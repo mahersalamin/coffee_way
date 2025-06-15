@@ -6,7 +6,7 @@ class ApiService {
 
   ApiService() {
     BaseOptions options = BaseOptions(
-      baseUrl: /*dotenv.env['API_BASE_URL'] ??*/ 'http://192.168.1.3:8000/api',
+      baseUrl: /*dotenv.env['API_BASE_URL'] ??*/ 'http://192.168.1.5:8000/api',
       connectTimeout: const Duration(seconds: 120),
       receiveTimeout: const Duration(seconds: 120),
       headers: {
@@ -16,11 +16,11 @@ class ApiService {
     _dio = Dio(options);
   }
 
-  Future<Response> get(String endpoint) async {
-    return await _dio.get(endpoint);
+  Future<Response> get(String endpoint, {Options? options}) async {
+    return await _dio.get(endpoint, options: options);
   }
 
-  Future<Response> post(String endpoint, dynamic data) async {
+  Future<Response> post(String endpoint, dynamic data, {Map<String, String>? headers}) async {
     print(data);
     return await _dio.post(endpoint, data: data);
   }
