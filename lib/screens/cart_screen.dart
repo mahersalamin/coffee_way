@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../services/cart_service.dart';
 
@@ -12,19 +15,75 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   final cartService = CartService();
   final apiService = ApiService();
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController mobileController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
 
   bool isSubmitting = false;
+  bool isLoggedIn = false;
+  Map<String, dynamic>? user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final userData = prefs.getString('userData');
+
+    if (token != null && userData != null) {
+      final decoded = json.decode(userData);
+      setState(() {
+        isLoggedIn = true;
+        user = decoded;
+        nameController.text = decoded['name'] ?? '';
+        mobileController.text = decoded['mobile'] ?? '';
+      });
+    }
+  }
+
+  bool _validateInput() {
+    if (nameController.text.trim().isEmpty || mobileController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('الرجاء تعبئة الاسم ورقم الجوال')),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<String> _getNoteFromDialog() async {
+    final localNoteController = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ملاحظة على الطلب'),
+        content: TextField(
+          controller: localNoteController,
+          decoration: const InputDecoration(hintText: 'اكتب ملاحظتك هنا'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, ''), child: const Text('تخطي')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, localNoteController.text.trim()),
+            child: const Text('تأكيد'),
+          ),
+        ],
+      ),
+    );
+    return result ?? '';
+  }
 
   void submitOrder() async {
-    setState(() {
-      isSubmitting = true;
-    });
+    if (!_validateInput()) return;
+
+    setState(() => isSubmitting = true);
 
     final orderItems = cartService.items.map((e) {
-      print(e);
       return {
         'item_id': e['item'].id,
         'size': e['size'].size,
@@ -32,12 +91,18 @@ class _CartScreenState extends State<CartScreen> {
       };
     }).toList();
 
+    String note = isLoggedIn ? await _getNoteFromDialog() : noteController.text.trim();
+
     final orderData = {
       'items': orderItems,
       'name': nameController.text.trim(),
       'mobile': mobileController.text.trim(),
-      'note': noteController.text.trim(),
+      'note': note,
     };
+
+    if (isLoggedIn && user != null) {
+      orderData['customer_id'] = user!['id'];
+    }
 
     try {
       final res = await apiService.post('/orders', orderData);
@@ -57,20 +122,17 @@ class _CartScreenState extends State<CartScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error submitting order: $e')),
+        SnackBar(content: Text('حدث خطأ أثناء إرسال الطلب: $e')),
       );
     }
 
-    setState(() {
-      isSubmitting = false;
-    });
+    setState(() => isSubmitting = false);
   }
-
 
   void showCustomerDetailsDialog() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (_) {
         return AlertDialog(
           title: const Text('معلومات الزبون'),
           content: Column(
@@ -100,7 +162,7 @@ class _CartScreenState extends State<CartScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                submitOrder(); // now uses controller values
+                submitOrder();
               },
               child: const Text('طلب'),
             ),
@@ -109,7 +171,6 @@ class _CartScreenState extends State<CartScreen> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -155,8 +216,7 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 Text(
                   'المجموع: ${cartService.total.toStringAsFixed(2)}₪',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
