@@ -20,9 +20,8 @@ class ApiService {
     return await _dio.get(endpoint, options: options);
   }
 
-  Future<Response> post(String endpoint, dynamic data, {Map<String, String>? headers}) async {
-    print(data);
-    return await _dio.post(endpoint, data: data);
+  Future<Response> post(String endpoint, dynamic data, { Options? options}) async {
+    return await _dio.post(endpoint, data: data, options: options);
   }
 
   Future<Response> patch(String endpoint, dynamic data) async {
