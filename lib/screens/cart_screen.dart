@@ -147,7 +147,8 @@ class _CartScreenState extends State<CartScreen> {
                 keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(labelText: 'رقم الهاتف'),
               ),
-              TextField(
+              if(!isLoggedIn)
+                TextField(
                 controller: noteController,
                 decoration: const InputDecoration(labelText: 'ملاحظات'),
                 maxLines: 2,

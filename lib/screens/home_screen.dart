@@ -5,6 +5,7 @@ import '../models/item_size.dart';
 import '../services/api_service.dart';
 import '../services/cart_service.dart';
 import 'cart_screen.dart';
+import 'notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -69,6 +70,18 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('كوفي وي - Coffee Way', style: TextStyle(color: Colors.black)),
         backgroundColor: const Color(0xFFFFD700),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              );
+            },
+          ),
+        ],
+
       ),
       body: Column(
         children: [
